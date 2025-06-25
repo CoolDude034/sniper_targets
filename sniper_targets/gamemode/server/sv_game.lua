@@ -20,6 +20,7 @@ function GM:AllowPlayerPickup(ply, ent)
 	return true
 end
 
+-- noclip is disabled, uncomment the first line below for testing purposes, but be sure to comment it back
 function GM:PlayerNoClip(ply)
 	--if (game.SinglePlayer()) then return true end
 	return false
@@ -59,15 +60,12 @@ hook.Add("PlayerInitialSpawn", "onPlayerInitialSpawn", function(ply)
 		RunConsoleCommand("sv_rollangle", "3")
 		RunConsoleCommand("gmod_maxammo", "0")
 		RunConsoleCommand("gmod_sneak_attack", "1")
-		RunConsoleCommand("gmod_suit", "1")
+		RunConsoleCommand("gmod_suit", "0")
 		
 		RunConsoleCommand("sv_allowcslua", "0")
 		
 		-- Ragdolls sleep after 2s
 		RunConsoleCommand("ragdoll_sleepaftertime", "2.0")
-		
-		-- Disable Skybox
-		RunConsoleCommand("r_3dsky", "0")
 	end
 end)
 
@@ -77,19 +75,7 @@ hook.Add("PlayerSpawn", "onPlayerSpawn", function(ply)
 	if game.SinglePlayer() then
 		ply:SetModel("models/player.mdl")
 	else
-		-- Randomize player's models
-		if math.random() < 0.35 then
-			if math.random() < 0.25 then
-				ply:SetModel("models/player/Group03m/female_0" .. math.random(1,6))
-			else
-				ply:SetModel("models/player/Group03m/male_0" .. math.random(1,9))
-			end
-		else
-			if math.random() < 0.25 then
-				ply:SetModel("models/player/Group03/female_0" .. math.random(1,6))
-			else
-				ply:SetModel("models/player/Group03/male_0" .. math.random(1,9))
-			end
-		end
+		-- TODO: DO CUSTOM PLAYER MODELS HERE
+		ply:SetModel("models/player/gman_high.mdl")
 	end
 end)
