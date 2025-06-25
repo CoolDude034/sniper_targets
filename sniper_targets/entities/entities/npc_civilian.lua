@@ -10,7 +10,7 @@ ENT.AnimationList = {
 	--"injured1postidle",
 	--"Lying_Down", -- use these with animation keyvalue
 	"AI_ScriptIdle",
-	"AI_ScriptWander"
+	"AI_AmbientWander"
 }
 
 ENT.ModelList = {
@@ -49,7 +49,7 @@ function ENT:Initialize()
 		self.currentAnimation = table.Random(self.AnimationList)
 	end
 	if self.gotoPath then
-		self.currentAnimation = "walkScriptedPath"
+		self.currentAnimation = "AI_ScriptWander"
 		self.rememberSpawnPoint = self:GetPos()
 	end
 
@@ -127,11 +127,11 @@ function ENT:RunBehaviour()
 
 	while ( true ) do
 
-		if self.currentAnimation == "AI_ScriptWander" then -- not a npc_citizen animation, special code
+		if self.currentAnimation == "AI_AmbientWander" then -- not a npc_citizen animation, special code
 			self:WanderRandomly()
 		elseif self.currentAnimation == "AI_ScriptIdle" then -- special code for making npcs stand idle without playing anims
 			self:StartActivity( ACT_IDLE )
-		elseif self.currentAnimation == "walkScriptedPath" then
+		elseif self.currentAnimation == "AI_ScriptWander" then
 			self:WalkToScriptedPath()
 		else
 			self:StartActivity( ACT_IDLE )
