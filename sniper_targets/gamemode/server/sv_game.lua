@@ -3,21 +3,11 @@ function GM:PlayerCanPickupWeapon(ply, wep)
         return false
     end
 	
-	if (wep:GetClass() == "weapon_annabelle") then
-		return false
-	elseif (wep:GetClass() == "weapon_stunstick") then
-		if ply:Armor() < 100 then
-			ply:SetArmor( ply:Armor() + 7 )
-		end
-		wep:Remove()
-		return false
+	if ( wep:GetClass() == "weapon_smg1" ) then -- REPLACE weapon_smg1 with your own SWEP!
+		return true
 	end
 	
-    return true
-end
-
-function GM:AllowPlayerPickup(ply, ent)
-	return true
+    return false
 end
 
 -- noclip is disabled, uncomment the first line below for testing purposes, but be sure to comment it back
@@ -37,14 +27,18 @@ function GM:GetFallDamage(ply, speed)
 	return math.max( 0, math.ceil( 0.2418 * speed - 141.75 ) )
 end
 
-function GM:AdjustMouseSensitivity(defaultSensitivity)
-	return 0.5
-end
-
 function GM:Initialize()
 end
 
 function GM:InitPostEntity()
+	for _,v in ipairs(ents.FindByClass("info_player_start")) do v:Remove() end
+	local sp = ents.Create("info_player_start")
+	sp:SetPos(Vector(729.1, -1684.1, 1136))
+	sp:Spawn()
+	
+	local sp = ents.Create("info_player_start")
+	sp:SetPos(Vector(719, -1474.1, 1136))
+	sp:Spawn()
 end
 
 hook.Add("PlayerInitialSpawn", "onPlayerInitialSpawn", function(ply)
@@ -63,6 +57,9 @@ hook.Add("PlayerInitialSpawn", "onPlayerInitialSpawn", function(ply)
 		RunConsoleCommand("gmod_suit", "0")
 		
 		RunConsoleCommand("sv_allowcslua", "0")
+		RunConsoleCommand("sv_playerpickupallowed", "0")
+		
+		RunConsoleCommand("maxplayers", "2") -- set max players to 2
 		
 		-- Ragdolls sleep after 2s
 		RunConsoleCommand("ragdoll_sleepaftertime", "2.0")
@@ -78,4 +75,21 @@ hook.Add("PlayerSpawn", "onPlayerSpawn", function(ply)
 		-- TODO: DO CUSTOM PLAYER MODELS HERE
 		ply:SetModel("models/player/gman_high.mdl")
 	end
+end)
+
+hook.Add("InitPostEntity", "addNPCs", function()
+	local path = ents.Create("path_corner")
+	path:SetName("civ_path")
+	path:SetPos(Vector(-973.1, -1815.3, -144))
+	path:Spawn()
+	
+	local npc = ents.Create("npc_civilian")
+	npc:SetPos(Vector(-961.2, -1162.9, -144))
+	npc:SetKeyValue("scripted_point", "civ_path")
+	npc:Spawn()
+	
+	local npc = ents.Create("npc_civilian")
+	npc:SetPos(Vector(-1079.3, -981, -144))
+	npc:SetKeyValue("animation", "Lying_Down")
+	npc:Spawn()
 end)
