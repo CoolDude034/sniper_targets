@@ -1,0 +1,10 @@
+		1
+		{
+			"name"		"skill"
+			"text"		"Difficulty Level"
+			"help"		"Set the game's difficulty setting. (HL2)"
+			"type"		"Numeric"
+			"default"	"1"
+			"singleplayer" "1"
+			"dontcreate" "1"
+		}

@@ -21,6 +21,7 @@ self:SetHoldType("rpg")
 self.isAiming=false
 end
 function SWEP:PrimaryAttack()
+if GetGlobal2Bool("round_over") then return end
 self:SetNextPrimaryFire(CurTime()+1.5)
 self:EmitSound("Weapon_357.Single")
 local owner=self:GetOwner()
@@ -37,6 +38,22 @@ owner:FireBullets(bullet)
 self:ShootEffects()
 if not self.isAiming then
 util.ParticleTracer("muzzle_rifles", self:GetOwner():GetShootPos(), self:GetOwner():GetAimVector(), true)
+end
+
+--alert civs/guards
+if not GetGlobal2Bool("civs_alerted") and SERVER then
+SetGlobal2Bool("civs_alerted", true)
+for _,v in ipairs( ents.FindByClass("npc_civilian") ) do
+	if IsValid(v) then
+		v:ForceAlert()
+	end
+end
+for _,v in ipairs( ents.FindByClass("npc_enemy") ) do
+	if IsValid(v) then
+		v:ForceAlert()
+	end
+end
+
 end
 end
 function SWEP:SecondaryAttack()

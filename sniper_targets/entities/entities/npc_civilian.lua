@@ -34,9 +34,17 @@ ENT.ModelList = {
 	"models/Humans/Group01/female_07.mdl",
 }
 
+ENT.WeaponData = {}
+
+ENT.AIData = {
+	IsStationary = false,
+	IsCrouching = false,
+	IsAlerted = false,
+}
 
 ENT.WAIT_TIME = 8
 ENT.WANDER_SPEED = 100
+ENT.RUN_SPEED = 200
 
 function ENT:Initialize()
 	
@@ -45,7 +53,7 @@ function ENT:Initialize()
 	else
 		self:SetModel( self.overrideModel )
 	end
-	if not self.currentAnimation then
+	if not self.currentAnimation and #self.AnimationList > 0 then
 		self.currentAnimation = table.Random(self.AnimationList)
 	end
 	if self.gotoPath then
@@ -55,12 +63,26 @@ function ENT:Initialize()
 
 end
 
+function ENT:SetupDataTables()
+	self:NetworkVar( "Bool", 0, "IsTarget" )
+end
+
+function ENT:UpdateTransmitState()
+	return TRANSMIT_ALWAYS
+end
+
 function ENT:KeyValue(key,value)
 	if key == "model" then
 		self.overrideModel = value
 	end
 	if key == "animation" then
 		self.currentAnimation = value
+	end
+	if key == "is_target" then
+		self:SetIsTarget(value == "1" and true or false)
+	end
+	if key == "keep_corpse" then
+		self.keepCorpse = value == "1"
 	end
 	if key == "scripted_point" then
 		for _,v in ipairs(ents.FindByClass("path_corner")) do
@@ -71,9 +93,47 @@ function ENT:KeyValue(key,value)
 	end
 end
 
+local g_hasWarnedAboutInnocentKills = false
+
+function ENT:OnKilled(dmginfo)
+	--print("[DEBUG] OnKilled called for", self)
+	--print("Is target:", self:GetIsTarget())
+	local score = team.GetScore(TEAM_UNASSIGNED)
+	if self:GetIsTarget() then
+		team.AddScore( TEAM_UNASSIGNED, 1 )
+	else
+		if score > 0 then
+			team.AddScore( TEAM_UNASSIGNED, -1 )
+		end
+		if not g_hasWarnedAboutInnocentKills then
+			g_hasWarnedAboutInnocentKills = true
+			PrintMessage(HUD_PRINTTALK, "[TIP] Killing non-targets reduce your overall score")
+		end
+	end
+	
+	if ( self.keepCorpse ) then
+		local body = ents.Create( "prop_ragdoll" )
+		body:SetPos( self:GetPos() )
+		body:SetAngles( self:GetAngles() )
+		body:SetModel( self:GetModel() )
+		body:SetKeyValue("spawnflags", "4")
+		body:Spawn()
+		self:Remove()
+	else
+		self:BecomeRagdoll( dmginfo )
+	end
+end
+
+function ENT:ForceAlert()
+	if self.AIData.IsAlerted then return end
+	self.AIData.IsAlerted = true
+	
+	self.currentAnimation = "AI_AmbientWander"
+end
+
 function ENT:WanderRandomly()
-	self:StartActivity( ACT_WALK )
-	self.loco:SetDesiredSpeed( self.WANDER_SPEED )
+	self:StartActivity( self.AIData.IsAlerted and ACT_WALK or ACT_RUN )
+	self.loco:SetDesiredSpeed( self.AIData.IsAlerted and self.RUN_SPEED or self.WANDER_SPEED )
 	
 	-- Choose a random location within 400 units of our position
 	local targetPos = self:GetPos() + Vector( math.Rand( -1, 1 ), math.Rand( -1, 1 ), 0 ) * 400
@@ -88,6 +148,9 @@ function ENT:WanderRandomly()
 	self:MoveToPos( targetPos )
 
 	self:StartActivity( ACT_IDLE ) -- revert to idle activity
+	if self.AIData.IsAlerted then
+		self:PlaySequenceAndWait( "fear_reaction" )
+	end
 	coroutine.wait( self.WAIT_TIME )
 end
 
@@ -123,23 +186,36 @@ function ENT:WalkToScriptedPath()
 	coroutine.wait( self.WAIT_TIME )
 end
 
+function ENT:RunAnimationCode()
+	if self.currentAnimation == "AI_AmbientWander" then -- not a npc_citizen animation, special code
+		self:WanderRandomly()
+	elseif self.currentAnimation == "AI_ScriptIdle" then -- special code for making npcs stand idle without playing anims
+		self:StartActivity( ACT_IDLE )
+		if self.AIData.IsAlerted then
+			self:PlaySequenceAndWait( "fear_reaction" )
+			coroutine.wait( self.WAIT_TIME )
+		end
+	elseif self.currentAnimation == "AI_ScriptWander" then
+		self:WalkToScriptedPath()
+	else
+		self:StartActivity( ACT_IDLE )
+		if self.AIData.IsAlerted then
+			self:PlaySequenceAndWait( "fear_reaction" )
+			coroutine.wait( self.WAIT_TIME )
+		else
+			-- gmod freaks out if we don't do this
+			if self.currentAnimation and type(self.currentAnimation) == "string" then
+				self:SetSequence( self.currentAnimation )
+			end
+		end
+	end
+end
+
 function ENT:RunBehaviour()
 
 	while ( true ) do
-
-		if self.currentAnimation == "AI_AmbientWander" then -- not a npc_citizen animation, special code
-			self:WanderRandomly()
-		elseif self.currentAnimation == "AI_ScriptIdle" then -- special code for making npcs stand idle without playing anims
-			self:StartActivity( ACT_IDLE )
-		elseif self.currentAnimation == "AI_ScriptWander" then
-			self:WalkToScriptedPath()
-		else
-			self:StartActivity( ACT_IDLE )
-			self:SetSequence( self.currentAnimation )
-		end
-
+		self:RunAnimationCode()
 		coroutine.yield()
-
 	end
 
 

@@ -10,16 +10,6 @@
 	{
 		1
 		{
-			"name"		"skill"
-			"text"		"Difficulty Level"
-			"help"		"Set the game's difficulty setting. (HL2)"
-			"type"		"Numeric"
-			"default"	"1"
-			"singleplayer" "1"
-			"dontcreate" "1"
-		}
-		2
-		{
 			"name"		"player_model_override"
 			"text"		"Player Model Override"
 			"help"		"Use custom model (TEMPORARY, WILL BE REPLACED WITH VGUI)"

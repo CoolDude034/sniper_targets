@@ -1,13 +1,15 @@
-util.AddNetworkString( "ServerMessage" )
-
-if ( CLIENT ) then
-
-local function onServerMessage()
-	local ply = net.ReadEntity()
-	if not ply:IsValid() then return end
-	local text = net.ReadString()
-	chat.AddText( ply, color_white, "[Server] ", text )
+if ( SERVER ) then -- SERVER REALM
+	util.AddNetworkString( "ServerMessage" )
 end
-net.Receive( "ServerMessage", onServerMessage)
+
+if ( CLIENT ) then -- CLIENT REALM
+
+	local function onServerMessage()
+		local ply = net.ReadEntity()
+		if not ply:IsValid() then return end
+		local text = net.ReadString()
+		chat.AddText( ply, color_white, "[Server] ", text )
+	end
+	net.Receive( "ServerMessage", onServerMessage)
 
 end
